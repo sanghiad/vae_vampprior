@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import torch
 import torch.utils.data as data_utils
-
+from . import celeba_dataloader
 import numpy as np
 
 from scipy.io import loadmat
@@ -379,6 +379,36 @@ def load_cifar10(args, **kwargs):
         args.pseudoinputs_std = 0.05
 
     return train_loader, val_loader, test_loader, args
+# ======================================================================================================================
+def load_celeba(args, **kwargs):
+    # set args
+    args.input_size = [3, 128, 128]
+    args.input_type = 'continuous'
+    args.dynamic_binarization = False
+    args.dataset_loc = "/media/adityasan92/New Volume/dataset/img_align_celeba/"
+    
+    # train loader
+    train = celeba_dataloader.Celeba_Dataset(args.dataset_loc,  partition=0)
+    train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle=True, **kwargs)
+
+    # validation loader
+    validation = celeba_dataloader.Celeba_Dataset(args.dataset_loc,  partition=1)
+    val_loader = data_utils.DataLoader(validation, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+
+    # test loader
+    test = celeba_dataloader.Celeba_Dataset(args.dataset_loc,  partition=2)
+    test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
+
+    # setting pseudo-inputs inits
+    if args.use_training_data_init == 1:
+        args.pseudoinputs_std = 0.01
+        init = x_train[0:args.number_components].T
+        args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
+    else:
+        args.pseudoinputs_mean = 0.4
+        args.pseudoinputs_std = 0.05
+
+    return train_loader, val_loader, test_loader, args
 
 # ======================================================================================================================
 def load_dataset(args, **kwargs):
@@ -396,6 +426,8 @@ def load_dataset(args, **kwargs):
         train_loader, val_loader, test_loader, args = load_freyfaces(args, **kwargs)
     elif args.dataset_name == 'cifar10':
         train_loader, val_loader, test_loader, args = load_cifar10(args, **kwargs)
+    elif args.dataset_name == 'celeba':
+        train_loader, val_loader, test_loader, args = load_celeba(args, **kwargs)
     else:
         raise Exception('Wrong name of the dataset!')
 

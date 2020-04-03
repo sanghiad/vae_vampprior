@@ -121,8 +121,7 @@ class VAE(Model):
         if self.args.input_type == 'binary':
             RE = log_Bernoulli(x, x_mean, dim=1)
         elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
-            #print(x.shape, x_mean.shape, x_logvar.shape)
-            x = x.view(x.size(0), -1)
+            print(x.shape, x_mean.shape, x_logvar.shape)
             RE = -log_Logistic_256(x, x_mean, x_logvar, dim=1)
         else:
             raise Exception('Wrong input type!')
